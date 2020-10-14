@@ -63,6 +63,7 @@ test_basic()
 	ret = thread_yield(16);
 	assert(ret == THREAD_INVALID);
 	printf("initial thread returns from yield(INVALID2)\n");
+
 	struct mallinfo minfo;
 	minfo = mallinfo();
 	allocated_space = minfo.uordblks;
@@ -98,7 +99,7 @@ test_basic()
 		ret = thread_yield(child[ii]);
 		assert(ret == child[ii]);
 	}
-	
+
 	/* destroy NTHREADS + 1 threads we just created */
 	printf("destroying all threads\n");
 	ret = thread_kill(ret2);
@@ -146,7 +147,6 @@ test_basic()
 			assert(thread_ret_ok(ret));
 		}
 	}
-	
 
 	/* check that the thread stacks are sufficiently far apart */
 	for (ii = 0; ii < THREAD_MAX_THREADS; ii++) {
