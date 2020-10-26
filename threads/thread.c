@@ -626,7 +626,8 @@ thread_wait(Tid tid)
 }
 
 struct lock {
-	/* ... Fill this in ... */
+	struct wait_queue lock_queue;
+	bool isLocked;
 };
 
 struct lock *
@@ -637,7 +638,7 @@ lock_create()
 	lock = malloc(sizeof(struct lock));
 	assert(lock);
 
-	TBD();
+	lock->isLocked = false;
 
 	return lock;
 }
@@ -647,7 +648,10 @@ lock_destroy(struct lock *lock)
 {
 	assert(lock != NULL);
 
-	TBD();
+	//if lock acquired, release the lock first
+	if (lock->isLocked){
+		lock_release(lock);
+	}
 
 	free(lock);
 }
@@ -657,7 +661,13 @@ lock_acquire(struct lock *lock)
 {
 	assert(lock != NULL);
 
-	TBD();
+	int enabled = interrupts_off();
+	//if lock is occupied, block
+	while (lock->isLocked == true){
+		thread_sleep(&lock->lock_queue);
+	}
+	lock->isLocked = true;
+	interrupts_set(enabled);
 }
 
 void
@@ -665,11 +675,19 @@ lock_release(struct lock *lock)
 {
 	assert(lock != NULL);
 
-	TBD();
+	int enabled = interrupts_off();
+
+	//if the not has not been acquired, just return
+	assert(lock->isLocked);
+
+	lock->isLocked = false;
+	thread_wakeup(&lock->lock_queue, 1);
+
+	interrupts_set(enabled);
 }
 
 struct cv {
-	/* ... Fill this in ... */
+	struct wait_queue cv_wait_queue;
 };
 
 struct cv *
@@ -680,8 +698,6 @@ cv_create()
 	cv = malloc(sizeof(struct cv));
 	assert(cv);
 
-	TBD();
-
 	return cv;
 }
 
@@ -690,7 +706,8 @@ cv_destroy(struct cv *cv)
 {
 	assert(cv != NULL);
 
-	TBD();
+	//check no threads are waiting on the condition variable
+	assert(cv->cv_wait_queue.head == NULL);
 
 	free(cv);
 }
@@ -701,7 +718,12 @@ cv_wait(struct cv *cv, struct lock *lock)
 	assert(cv != NULL);
 	assert(lock != NULL);
 
-	TBD();
+	//check whether the lock is acquired
+	assert(lock->isLocked);
+
+	lock_release(lock);
+	thread_sleep(&cv->cv_wait_queue);
+	lock_acquire(lock);
 }
 
 void
@@ -710,7 +732,10 @@ cv_signal(struct cv *cv, struct lock *lock)
 	assert(cv != NULL);
 	assert(lock != NULL);
 
-	TBD();
+	//check whether the lock is acquired
+	assert(lock->isLocked);
+
+	thread_wakeup(&cv->cv_wait_queue, 0);
 }
 
 void
@@ -719,5 +744,8 @@ cv_broadcast(struct cv *cv, struct lock *lock)
 	assert(cv != NULL);
 	assert(lock != NULL);
 
-	TBD();
+	//check whether the lock is acquired
+	assert(lock->isLocked);
+
+	thread_wakeup(&cv->cv_wait_queue, 1);
 }
