@@ -585,7 +585,7 @@ test_wait(void)
 	for (i = 0; i < NTHREADS; i++) {
 		thread_wait(wait[i]);
 	}
-
+	
 	mallinfo_check(&minfo_start);
 	unintr_printf("wait test done\n");
 }

@@ -1,5 +1,6 @@
 #include "thread.h"
 #include "test_thread.h"
+#include "interrupt.h"
 
 int
 main(int argc, char **argv)
